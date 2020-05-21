@@ -4,7 +4,7 @@
       Vinlista
       <v-spacer></v-spacer>
       <v-text-field
-        v-model="search"
+        v-model="searchText"
         append-icon="mdi-magnify"
         label="Search"
         single-line
@@ -14,7 +14,7 @@
     <v-data-table
       :headers="headers"
       :items="wines"
-      :search="search"
+      :search="searchTable"
       :footer-props="{
         'items-per-page-options': [10, 20, 30, 40, 50]
       }"
@@ -53,7 +53,8 @@ export default {
   },
 
   data: () => ({
-    search: "",
+    searchTable: "",
+    searchText: "",
     listSize: [10, 25, 50, 100],
     headers: [
       {
@@ -100,9 +101,23 @@ export default {
         console.log(error);
       });
   },
+  watch: {
+    searchText(val) {
+      if (!val) {
+        return;
+      }
+      this.searchDebounced(val);
+    }
+  },
   methods: {
-    getGrapes: grapes => {
-      return grapes.map(grape => grape.name).join(", ");
+    searchDebounced(val) {
+      // cancel pending call
+      clearTimeout(this._timerId);
+
+      // delay new call 500ms
+      this._timerId = setTimeout(() => {
+        this.searchTable = val;
+      }, 500);
     }
   }
 };
