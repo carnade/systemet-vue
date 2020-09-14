@@ -28,6 +28,13 @@
       sort-by="lastestPriceChangeDate"
       sort-desc
     >
+      <template slot="expand" slot-scope="props">
+        <v-card flat>
+          <v-card-text>
+            <td>{{props.name}}</td>
+          </v-card-text>
+        </v-card>
+      </template>
       <!--       hide-default-footer -->
       <template #item.name="{item}">{{item.name}} {{item.nameExtra}}</template>
       <template #item.vintage="{value}">{{value != 0 ? value: "-"}}</template>
@@ -66,6 +73,7 @@ export default {
       { text: "Typ", value: "category" },
       { text: "Land", value: "country" },
       { text: "Producent", value: "producer" },
+      { text: "Importör", value: "producer" },
       { text: "Årgång", value: "vintage" },
       { text: "Pris", value: "price" },
       { text: "Ändring %", value: "lastestPriceChangePercent" },
@@ -92,10 +100,17 @@ export default {
       .get(baseURI)
       .then(result => {
         this.wines = result.data;
+        this.wines = this.wines.filter(w => w.lastestPriceChangePercent < 0);
+        this.wines = this.wines.filter(w => {
+          let d1 = new Date(w.lastestPriceChangeDate);
+          let d2 = new Date("2020-08-30");
+          return d1 > d2;
+        });
+        this.wines = this.wines.filter(w => !w.outOfStock);
+
         this.wines.forEach(wine => {
           wine.grapeList = wine.grapes.map(grape => grape.name).join(", ");
         });
-        console.log(this.wines);
       })
       .catch(error => {
         console.log(error);
