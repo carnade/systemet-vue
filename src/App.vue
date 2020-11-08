@@ -8,19 +8,18 @@
 </template >
 
 <script>
-import AppBar from './components/AppBar';
-import DataTable from './components/DataTable';
+import AppBar from "./components/AppBar";
+import DataTable from "./components/DataTable";
 
 export default {
-  name: 'App',
+  name: "App",
 
   components: {
     AppBar,
-    DataTable
+    DataTable,
   },
 
   data: () => ({
-
     //
   }),
 };

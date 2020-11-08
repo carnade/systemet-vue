@@ -1,5 +1,7 @@
 <template>
   <v-card>
+    <v-switch v-model="releaseSwitch" :label="`Enbart nya releaser`"></v-switch>
+    <v-switch v-model="priceDropSwitch" :label="`Enbart prissänkta`"></v-switch>
     <v-card-title>
       Vinlista
       <v-spacer></v-spacer>
@@ -13,10 +15,10 @@
     </v-card-title>
     <v-data-table
       :headers="headers"
-      :items="wines"
+      :items="computedWines"
       :search="searchTable"
       :footer-props="{
-        'items-per-page-options': [10, 20, 30, 40, 50]
+        'items-per-page-options': [10, 20, 30, 40, 50],
       }"
       :items-per-page="20"
       class="elevation-3"
@@ -31,19 +33,29 @@
       <template slot="expand" slot-scope="props">
         <v-card flat>
           <v-card-text>
-            <td>{{props.name}}</td>
+            <td>{{ props.name }}</td>
           </v-card-text>
         </v-card>
       </template>
       <!--       hide-default-footer -->
-      <template #item.name="{item}">{{item.name}} {{item.nameExtra}}</template>
-      <template #item.vintage="{value}">{{value != 0 ? value: "-"}}</template>
-      <template #item.price="{item}">
+      <template #item.name="{ item }"
+        >{{ item.name }} {{ item.nameExtra }}</template
+      >
+      <template #item.vintage="{ value }">{{
+        value != 0 ? value : "-"
+      }}</template>
+      <template #item.price="{ item }">
         <PriceSlot :item="item" />
       </template>
-      <template #item.lastestPriceChangePercent="{value}">{{value && (value*100).toFixed(1) + '%'}}</template>
-      <template #item.lastestPriceChangeDate="{value}">{{value && value.split('T')[0]}}</template>
-      <template #item.sellStart="{value}">{{value && value.split('T')[0]}}</template>
+      <template #item.lastestPriceChangePercent="{ value }">{{
+        value && (value * 100).toFixed(1) + "%"
+      }}</template>
+      <template #item.lastestPriceChangeDate="{ value }">{{
+        value && value.split("T")[0]
+      }}</template>
+      <template #item.sellStart="{ value }">{{
+        value && value.split("T")[0]
+      }}</template>
       <!--      <template #item.grapes="{value}">{{getGrapes(value)}}</template>-->
     </v-data-table>
   </v-card>
@@ -56,10 +68,12 @@ import PriceSlot from "./slots/PriceSlot";
 export default {
   name: "DataTable",
   components: {
-    PriceSlot
+    PriceSlot,
   },
 
   data: () => ({
+    releaseSwitch: false,
+    priceDropSwitch: false,
     searchTable: "",
     searchText: "",
     listSize: [10, 25, 50, 100],
@@ -68,7 +82,7 @@ export default {
         text: "Namn",
         value: "name",
         align: "left",
-        sortable: false
+        sortable: false,
       },
       { text: "Typ", value: "category" },
       { text: "Land", value: "country" },
@@ -84,35 +98,53 @@ export default {
       { text: "Säljstart", value: "sellStart" },
       { text: "Vivino", value: "scoreVivino" },
       { text: "", value: "_id" },
-      { text: "druvor", value: "grapeList" }
+      { text: "druvor", value: "grapeList" },
     ],
-    wines: []
+    wines: [],
   }),
   computed: {
     computedHeaders() {
-      return this.headers.filter(header => header.text !== "id");
-    }
+      return this.headers.filter((header) => header.text !== "id");
+    },
+
+    computedWines() {
+      let cw = this.wines;
+
+      if (this.releaseSwitch) {
+        cw = cw.filter((w) => {
+          let d1 = new Date(w.sellStart);
+          let d2 = new Date("2020-08-30");
+          return d1 > d2;
+        });
+      }
+      if (this.priceDropSwitch) {
+        cw = cw.filter((w) => w.lastestPriceChangePercent < 0);
+      }
+
+      return cw;
+    },
   },
   created() {
-    const baseURI = "http://localhost:3000/item/wines";
+    const baseURI = "http://localhost:1337/item/wines";
+    //const baseURI = "http://localhost:3000/item/wines";
     //const baseURI = 'https://jsonplaceholder.typicode.com/todos/1';
     this.$http
       .get(baseURI)
-      .then(result => {
+      .then((result) => {
         this.wines = result.data;
-        this.wines = this.wines.filter(w => w.lastestPriceChangePercent < 0);
+        /*        this.wines = this.wines.filter(w => w.lastestPriceChangePercent < 0);
         this.wines = this.wines.filter(w => {
           let d1 = new Date(w.lastestPriceChangeDate);
           let d2 = new Date("2020-08-30");
           return d1 > d2;
         });
-        this.wines = this.wines.filter(w => !w.outOfStock);
+        this.wines = this.wines.filter(w => !w.outOfStock);*/
 
-        this.wines.forEach(wine => {
-          wine.grapeList = wine.grapes.map(grape => grape.name).join(", ");
+        this.wines.forEach((wine) => {
+          wine.grapeList = wine.grapes.map((grape) => grape.name).join(", ");
         });
       })
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
       });
   },
@@ -122,7 +154,7 @@ export default {
         return;
       }
       this.searchDebounced(val);
-    }
+    },
   },
   methods: {
     searchDebounced(val) {
@@ -133,8 +165,8 @@ export default {
       this._timerId = setTimeout(() => {
         this.searchTable = val;
       }, 500);
-    }
-  }
+    },
+  },
 };
 </script>
 
