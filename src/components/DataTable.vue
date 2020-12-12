@@ -2,6 +2,14 @@
   <v-card>
     <v-switch v-model="releaseSwitch" :label="`Enbart nya releaser`"></v-switch>
     <v-switch v-model="priceDropSwitch" :label="`Enbart prissänkta`"></v-switch>
+    <v-switch
+      v-model="recentPriceDropSwitch"
+      :label="`Nyligt prissänkta`"
+    ></v-switch>
+    <v-switch
+      v-model="showOutOfStockSwitch"
+      :label="`Visa ej i lager`"
+    ></v-switch>
     <v-card-title>
       Vinlista
       <v-spacer></v-spacer>
@@ -86,8 +94,8 @@ export default {
       },
       { text: "Typ", value: "category" },
       { text: "Land", value: "country" },
-      { text: "Producent", value: "producer" },
-      { text: "Importör", value: "producer" },
+      //{ text: "Producent", value: "producer" },
+      //{ text: "Importör", value: "producer" },
       { text: "Årgång", value: "vintage" },
       { text: "Pris", value: "price" },
       { text: "Ändring %", value: "lastestPriceChangePercent" },
@@ -121,12 +129,24 @@ export default {
         cw = cw.filter((w) => w.lastestPriceChangePercent < 0);
       }
 
+      if (this.recentPriceDropSwitch) {
+        cw = cw.filter((w) => {
+          let d1 = new Date(w.lastestPriceChangeDate);
+          let d2 = new Date() - 7;
+          return d1 > d2;
+        });
+      }
+
+      if (!this.showOutOfStock) {
+        cw = cw.filter((w) => w.isCompletelyOutOfStock);
+      }
+
       return cw;
     },
   },
   created() {
-    const baseURI = "http://localhost:1337/item/wines";
-    //const baseURI = "http://localhost:3000/item/wines";
+    //const baseURI = "http://localhost:1337/item/wines";
+    const baseURI = "http://localhost:3000/item/wines";
     //const baseURI = 'https://jsonplaceholder.typicode.com/todos/1';
     this.$http
       .get(baseURI)
@@ -145,7 +165,7 @@ export default {
         });
       })
       .catch((error) => {
-        console.log(error);
+        this.console.log(error);
       });
   },
   watch: {
